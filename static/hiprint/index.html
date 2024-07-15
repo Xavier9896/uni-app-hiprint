@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" media="print" href="./css/print-lock.css" />
+    <script type="text/javascript" src="./js/jquery.min.js"></script>
+    <script type="text/javascript" src="./js/socket.io.min.js"></script>
+    <script type="text/javascript" src="./js/vue-plugin-hiprint.js"></script>
+    <script type="text/javascript" src="./js/vconsole.min.js"></script>
+    <script
+      type="text/javascript"
+      src="./js/hybrid_html_uni.webview.1.5.5.js"
+    ></script>
+    <style>
+      #container {
+        width: 100%;
+      }
+    </style>
+    <title>hiprint-demo</title>
+  </head>
+  <body>
+    <h1>webView</h1>
+    <div id="container"></div>
+    <script defer>
+      window.autoConnect = false;
+      var vConsole = new window.VConsole();
+      // vConsole.setSwitchPosition(400, 400);
+      // 初始化 hiprint 插件
+      hiprint.init();
+      /**
+       * @description: 向 uts 发送消息
+       * @param {String} type 消息类型
+       * @param {Any} data 消息数据
+       * @return {Void}
+       */
+      function postMessage({ type, data }) {
+        type = type || "message";
+        uni.webView.postMessage({
+          data: {
+            type,
+            data: JSON.stringify(data),
+          },
+        });
+      }
+      postMessage({
+        type: "ready",
+      });
+      /**
+       * @description: 连接服务
+       * @param {String} host 服务地址
+       * @param {String} token 服务 token
+       * @return {Void}
+       */
+      function init(host, token) {
+        console.log(host, token);
+        if (!host) {
+          return postMessage({
+            type: "error",
+            data: "host is required",
+          });
+        }
+        hiwebSocket.setHost(host, token);
+        hiwebSocket.socket.on("success", ({ templateId }) => {
+          hinnn.event.trigger(`printSuccess_${templateId}`);
+        });
+      }
+
+      function print({ json, data, options }) {
+		  console.log(arguments[0])
+        let hiprintTemplate = new hiprint.PrintTemplate({
+          template: json,
+        });
+        let templateId = new Date().getTime();
+        // $("#container").html(hiprintTemplate.getHtml(data));
+        try {
+          hiwebSocket.socket.emit("news", {
+            html: hiprintTemplate.getHtml(data).html(),
+            templateId,
+            client: options.client,
+            printer: options.printer,
+          });
+          hinnn.event.on(`printSuccess_${templateId}`, () => {
+            postMessage({
+              type: "success",
+              data: "打印成功",
+            });
+            hinnn.event.off(`printSuccess_${templateId}`);
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      // --------> 监听 hiprint 的一些事件 <--------
+      // 监听 clients 消息
+      hinnn.event.on("clients", (clients) => {
+        postMessage({
+          type: "connected",
+          data: clients,
+        });
+      });
+    </script>
+  </body>
+</html>
