@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta id="viewport" name="viewport" content="width=device-width" />
     <link rel="stylesheet" media="print" href="./css/print-lock.css" />
     <script type="text/javascript" src="./js/jquery.min.js"></script>
     <script type="text/javascript" src="./js/socket.io.min.js"></script>
@@ -16,16 +16,47 @@
       #container {
         width: 100%;
       }
+      .loading {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .loading__icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid #ccc;
+        border-top-color: #333;
+        animation: loading 1s linear infinite;
+      }
+      .loading__text {
+        margin-top: 10px;
+      }
+      @keyframes loading {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     </style>
-    <title>hiprint-demo</title>
+    <title>hiprint-webview</title>
   </head>
   <body>
-    <h1>webView</h1>
-    <div id="container"></div>
+    <div id="container">
+      <div class="loading">
+        <div class="loading__icon"></div>
+        <div class="loading__text">加载中...</div>
+      </div>
+    </div>
     <script defer>
+      // 取消自动连接
       window.autoConnect = false;
+      // 实例化 vConsole
       var vConsole = new window.VConsole();
-      // vConsole.setSwitchPosition(400, 400);
       // 初始化 hiprint 插件
       hiprint.init();
       /**
@@ -39,13 +70,10 @@
         uni.webView.postMessage({
           data: {
             type,
-            data: JSON.stringify(data),
+            data: JSON.stringify(data || ""),
           },
         });
       }
-      postMessage({
-        type: "ready",
-      });
       /**
        * @description: 连接服务
        * @param {String} host 服务地址
@@ -65,32 +93,62 @@
           hinnn.event.trigger(`printSuccess_${templateId}`);
         });
       }
-
-      function print({ json, data, options }) {
-		  console.log(arguments[0])
+      /**
+       * @description: 生成预览
+       * @param {Object} json 模板数据
+       * @param {Array|Object} data 打印数据
+       * @return {Void}
+       */
+      function preview({ json, data }) {
         let hiprintTemplate = new hiprint.PrintTemplate({
           template: json,
         });
+        // 设置预览
+        $("#container").html(hiprintTemplate.getHtml(data));
+        // console.log($("#container").width());
+        // 设置缩放为页面尺寸
+        $("#viewport").attr("content", `width=${$("#container").width()}`);
+      }
+      /**
+       * @description: 调用打印
+       * @param {Object} json 模板数据
+       * @param {Array|Object} data 打印数据
+       * @param {Object} options 打印配置
+       * @return {Void}
+       */
+      function print({ json, data, options }) {
+        let hiprintTemplate = new hiprint.PrintTemplate({
+          template: json,
+        });
+        // 生成一个临时 id
         let templateId = new Date().getTime();
-        // $("#container").html(hiprintTemplate.getHtml(data));
         try {
+          // 使用 hiwebSocket 发送打印消息，这里重写了发送打印消息的方法，没有使用 vue-plugin-hiprint 内部提供的 print2
           hiwebSocket.socket.emit("news", {
             html: hiprintTemplate.getHtml(data).html(),
             templateId,
             client: options.client,
             printer: options.printer,
           });
+          // 监听打印成功事件，这里使用的是 vue-plugin-hiprint 内部的事件监听
           hinnn.event.on(`printSuccess_${templateId}`, () => {
             postMessage({
               type: "success",
               data: "打印成功",
             });
+            // 解绑事件
             hinnn.event.off(`printSuccess_${templateId}`);
           });
         } catch (error) {
           console.log(error);
         }
       }
+      // 监听 uniapp jsbridge 准备完成
+      document.addEventListener("UniAppJSBridgeReady", function () {
+        postMessage({
+          type: "ready",
+        });
+      });
       // --------> 监听 hiprint 的一些事件 <--------
       // 监听 clients 消息
       hinnn.event.on("clients", (clients) => {

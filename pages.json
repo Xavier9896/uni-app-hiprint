@@ -7,6 +7,12 @@
 			}
 		},
 		{
+			"path": "pages/preview/index",
+			"style": {
+				"navigationBarTitleText": "preview"
+			}
+		},
+		{
 			"path": "pages/webview/index",
 			"style": {
 				"navigationBarTitleText": "webview"

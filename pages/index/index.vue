@@ -4,7 +4,18 @@
       这是一个 uniapp 开发的 vue-plugin-hiprint 周边生态项目，实现了 uniapp
       IOS、Android 中的打印。
     </view>
-    <uv-button type="primary" text="进入打印 webView 页" @click="navigator"></uv-button>
+    <view class="buttons">
+      <uv-button
+        type="primary"
+        text="进入 打印 页"
+        @click="navigator('print')"
+      ></uv-button>
+      <uv-button
+        type="primary"
+        text="进入 预览 页"
+        @click="navigator('preview')"
+      ></uv-button>
+    </view>
   </view>
 </template>
 
@@ -15,9 +26,18 @@ export default {
   },
   onLoad() {},
   methods: {
-    navigator() {
+    navigator(type) {
+      var url = "";
+      switch (type) {
+        case "print":
+          url = "/pages/webview/index";
+          break;
+        case "preview":
+          url = "/pages/preview/index";
+          break;
+      }
       uni.navigateTo({
-        url: "/pages/webview/index",
+        url,
       });
     },
   },
@@ -31,5 +51,10 @@ export default {
 }
 .info {
   margin: 16px 0;
+}
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 </style>
