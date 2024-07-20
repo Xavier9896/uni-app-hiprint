@@ -4,9 +4,19 @@
     <meta charset="UTF-8" />
     <meta id="viewport" name="viewport" content="width=device-width" />
     <link rel="stylesheet" media="print" href="./css/print-lock.css" />
+		<!-- 必须 -->
     <script type="text/javascript" src="./js/jquery.min.js"></script>
+		<!-- 直接打印/连接中转需要 -->
     <script type="text/javascript" src="./js/socket.io.min.js"></script>
+		<!-- 条形码 -->
+		<script type="text/javascript" src="./js/JsBarcode.all.min.js"></script>
+		<!-- toPdf需要 -->
+		<script type="text/javascript" src="./js/canvg.js"></script>
+		<script type="text/javascript" src="./js/jspdf.umd.min.js"></script>
+		<script type="text/javascript" src="./js/html2canvas.js"></script>
+		<!-- 核心 -->
     <script type="text/javascript" src="./js/vue-plugin-hiprint.js"></script>
+		<!-- 调试工具 -->
     <script type="text/javascript" src="./js/vconsole.min.js"></script>
     <script
       type="text/javascript"
@@ -143,12 +153,53 @@
           console.log(error);
         }
       }
+			/**
+			 * @description: 调用导出 pdf
+			 * @param {Object} json 模板数据
+			 * @param {Array|Object} data 打印数据
+			 * @param {String} name 导出名称
+			 * @param {Object} options 配置
+			 * @param {Function} callback 回调
+			 * @return {Void}
+			 */
+			function pdfTest({ json, data, name, options, callback }) {
+				try {
+					console.log('?????????????????');
+					let hiprintTemplate = new hiprint.PrintTemplate({
+					  template: json,
+					});
+					console.log('toPdf ???');
+					hiprintTemplate.toPdf(data, name, options).then((res) => {
+						callback && callback(res);
+					});
+				} catch (error) {
+				  console.log('toPdf error');
+				  console.log(error);
+				}
+			}
       // 监听 uniapp jsbridge 准备完成
       document.addEventListener("UniAppJSBridgeReady", function () {
         postMessage({
           type: "ready",
         });
       });
+			window.onerror = function(message, source, lineno, colno, error) {
+			    // 收集错误信息
+			    let errorInfo = {
+			        message: message,
+			        source: source,
+			        lineno: lineno,
+			        colno: colno,
+			        stack: error && error.stack
+			    };
+			 
+			    // 在控制台打印错误信息（用于调试）
+			    console.error('Global error caught:');
+					console.log(errorInfo);
+			 
+			    // 返回true阻止异常的默认行为（可选）
+			    return false;
+			};
       // --------> 监听 hiprint 的一些事件 <--------
       // 监听 clients 消息
       hinnn.event.on("clients", (clients) => {
