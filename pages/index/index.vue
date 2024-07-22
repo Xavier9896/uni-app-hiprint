@@ -7,9 +7,14 @@
     <view class="buttons">
       <uv-button
         type="primary"
-        text="进入 打印 页"
+        text="进入 打印 页(nvue)"
         @click="navigator('print')"
       ></uv-button>
+			<uv-button
+			  type="primary"
+			  text="进入 打印 页(vue) - 隐藏webview"
+			  @click="navigator('print2')"
+			></uv-button>
       <uv-button
         type="primary"
         text="进入 预览 页"
@@ -32,6 +37,9 @@ export default {
         case "print":
           url = "/pages/webview/index";
           break;
+				case "print2":
+					url = "/pages/webview2/index";
+					break;
         case "preview":
           url = "/pages/preview/index";
           break;

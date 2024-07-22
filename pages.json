@@ -17,6 +17,12 @@
 			"style": {
 				"navigationBarTitleText": "webview"
 			}
+		},
+		{
+			"path": "pages/webview2/index",
+			"style": {
+				"navigationBarTitleText": "webview2"
+			}
 		}
 	],
 	"globalStyle": {
